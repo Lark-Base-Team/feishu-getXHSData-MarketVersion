@@ -40,8 +40,8 @@
       :title="$t('alerts.selectGroupFieldTip')" type="info" show-icon />
 
 
-    <el-form-item v-if="isDetailMode" style="margin-top: 20px;" :label="$t('labels.cookie')" size="large">
-      <div class="cookie-tip">当 Cookie 不填或过期后，笔记的互动数据将显示为近似值，如整十或整百。可参考说明文档更新 Cookie 以获取精确数据。</div>
+    <el-form-item v-if="isDetailMode" style="margin-top: 20px;" :label="$t('labels.cookie')" size="large" required>
+      <div class="cookie-tip">请填写cookie以获取数据 ~</div>
       <el-input v-model="cookie" type="text" :placeholder="$t('placeholder.cookie')"></el-input>
 
     </el-form-item>
@@ -83,7 +83,7 @@ const historyFieldListSeView = ref([])
 const linkFieldId = ref('')  // 链接字段Id
 const isShowReward = ref(false)
 
-const qrCode = ref('./src/assets/qrCode.jpg'); // 你的二维码图片路径
+const qrCode = ref('../src/assets/qrCode.jpg'); // 你的二维码图片路径
 const isWritingData = ref(false)
 let historyTable
 const isDetailMode = ref(true)
@@ -158,9 +158,9 @@ const errorCount = ref(0)
 
 const issubmitAbled = computed(() => {
   if (!isDetailMode.value)
-    return linkFieldId.value && checkedFieldsToMap.value.length
+    return linkFieldId.value && checkedFieldsToMap.value.length && cookie.value.length
   else
-    return linkFieldId.value && checkedFieldsToMap.value.length
+    return linkFieldId.value && checkedFieldsToMap.value.length && cookie.value.length
 
 })  // 是否允许提交，及必选字段是否都填写
 
