@@ -72,6 +72,9 @@ import { ref, onMounted, computed, isShallow } from 'vue';
 import axios from 'axios';
 import qs from 'qs';
 import Reward from '@/components/Reward.vue'; // 确保路径正确
+
+import qrCode from '@/assets/qrCode.jpg';
+
 // -- 可更改区域
 // TODO: 可替换为相应的后端服务基地址，注意末尾没有斜杠
 const baseUrl = ref('https://feishu-xhs-assistant-nixiang-wuyi.replit.app')
@@ -83,7 +86,7 @@ const historyFieldListSeView = ref([])
 const linkFieldId = ref('')  // 链接字段Id
 const isShowReward = ref(false)
 
-const qrCode = ref('../src/assets/qrCode.jpg'); // 你的二维码图片路径
+// const qrCode = ref('../src/assets/qrCode.jpg'); // 你的二维码图片路径
 const isWritingData = ref(false)
 let historyTable
 const isDetailMode = ref(true)
