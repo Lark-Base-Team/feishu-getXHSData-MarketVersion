@@ -52,5 +52,7 @@
     "errorLinkType": "Field type error, please set to text type or link type",
     "errorRequest": "Cookie error or request timeout"
   },
-  "finishTip": "Data retrieval complete, number of failed requests:"
+  "finishTip": "Data retrieval complete, number of failed requests:",
+  "successFinishTip": "Data request successful",
+  "errorFinishTip": "Data request partially failed, number of failures: "
 }

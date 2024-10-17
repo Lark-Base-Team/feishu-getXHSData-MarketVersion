@@ -52,6 +52,7 @@
     "errorLinkType": "字段类型错误，请设置为文本类型或链接类型",
     "errorRequest": "Cookie 错误或请求超时"
   },
-  "finishTip": "数据获取完成, 请求失败数："
-
+  "finishTip": "数据获取完成, 请求失败数：",
+  "successFinishTip": "数据请求成功",
+  "errorFinishTip": "数据请求部分失败，失败数量："
 } 

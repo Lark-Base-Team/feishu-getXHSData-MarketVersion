@@ -271,11 +271,20 @@ const writeData = async () => {
   }
 
   isWritingData.value = false
-  isShowReward.value = true
-  await bitable.ui.showToast({
-    toastType: 'success',
-    message: `${t('finishTip')} ${errorCount.value}`
-  })
+  if (errorCount.value == 0) {
+    await bitable.ui.showToast({
+      toastType: 'success',
+      message: `${t('successFinishTip')}`
+    })
+    isShowReward.value = true
+  } else {
+    await bitable.ui.showToast({
+      toastType: 'error',
+      message: `${t('errorFinishTip')} ${errorCount.value}`
+    })
+  }
+
+  
 
 
 
