@@ -1,5 +1,16 @@
 <template>
   <el-form ref="form" class="form" label-position="top">
+    <!-- 免责声明区域 -->
+    <el-alert
+      type="warning"
+      :closable="false"
+      style="margin-bottom: 20px; border-radius: 4px;"
+    >
+      <div class="disclaimer">
+        <strong>免责声明：</strong>本工具仅供学习交流使用，不得用于任何商业目的。使用本工具获取的数据，用户应当遵守相关法律法规，不得用于侵犯他人合法权益。开发者对使用本工具产生的任何后果不承担责任。
+      </div>
+    </el-alert>
+    
     <div style="width: 100%;padding-left: 10px;border-left: 5px solid #2598f8;margin-bottom: 20px;padding-top: 5px;">{{
       $t('title') }}</div>
     <el-alert style="margin: 20px 0;color: #606266;" :title="$t('alerts.selectNumberField')" type="info" />
@@ -41,7 +52,7 @@
 
 
     <el-form-item v-if="isDetailMode" style="margin-top: 20px;" :label="$t('labels.cookie')" size="large" required>
-      <div class="cookie-tip">请填写cookie以获取数据 ~</div>
+      <div class="cookie-tip">Cookie 为必填项，没有有效的 Cookie 将无法获取数据。请参考说明文档获取并填写 Cookie 以获取数据。</div>
       <el-input v-model="cookie" type="text" :placeholder="$t('placeholder.cookie')"></el-input>
 
     </el-form-item>
@@ -72,12 +83,9 @@ import { ref, onMounted, computed, isShallow } from 'vue';
 import axios from 'axios';
 import qs from 'qs';
 import Reward from '@/components/Reward.vue'; // 确保路径正确
-
-import qrCode from '@/assets/qrCode.jpg';
-
 // -- 可更改区域
 // TODO: 可替换为相应的后端服务基地址，注意末尾没有斜杠
-const baseUrl = ref('https://feishu-xhs-assistant-nixiang-wuyi.replit.app')
+const baseUrl = ref('https://a-free-xhs-data-yngsgiwyot.cn-hongkong.fcapp.run')
 
 // -- 数据区域
 const { t } = useI18n();
@@ -86,7 +94,7 @@ const historyFieldListSeView = ref([])
 const linkFieldId = ref('')  // 链接字段Id
 const isShowReward = ref(false)
 
-// const qrCode = ref('../src/assets/qrCode.jpg'); // 你的二维码图片路径
+const qrCode = ref('./src/assets/qrCode.jpg'); // 你的二维码图片路径
 const isWritingData = ref(false)
 let historyTable
 const isDetailMode = ref(true)
@@ -152,7 +160,7 @@ const checkedFieldsToMap = ref([
   'errorTip'
 ])   // 默认的to-map的字段
 
-const toCalcInterCount = ref(['likeCount', 'collectionCount', 'shareCount', 'commentCount'])  // 实际用于计算“总交互量”的字段
+const toCalcInterCount = ref(['likeCount', 'collectionCount', 'shareCount', 'commentCount'])  // 实际用于计算"总交互量"的字段
 const allToCalcInterCount = ref({})  // 可用于计算"总交互量"的字段
 const cookie = ref('')
 const xSCommon = ref('')
@@ -161,9 +169,9 @@ const errorCount = ref(0)
 
 const issubmitAbled = computed(() => {
   if (!isDetailMode.value)
-    return linkFieldId.value && checkedFieldsToMap.value.length && cookie.value.length
+    return linkFieldId.value && checkedFieldsToMap.value.length
   else
-    return linkFieldId.value && checkedFieldsToMap.value.length && cookie.value.length
+    return linkFieldId.value && checkedFieldsToMap.value.length && cookie.value
 
 })  // 是否允许提交，及必选字段是否都填写
 
@@ -203,24 +211,10 @@ const writeData = async () => {
   await completeMappedFieldIdsValue()
 
   // ## mode1: 全部记录
-  const RecordList = await (async (table) => {
-    let recordIdData;
-    let token = undefined;
-    // setLoading(true);
-    const recordIdList = []
-    do {
-      recordIdData = await table.getVisibleRecordIdListByPage(token ? { pageToken: token, pageSize: 200 } : { pageSize: 200 });
-      token = recordIdData.pageToken;
-      // setLoadingTip(`${((token > 200 ? (token - 200) : 0) / recordIdData.total * 100).toFixed(2)}%`)
-      recordIdList.push(...recordIdData.recordIds)
-
-    } while (recordIdData.hasMore);
-    // setLoading(false);
-    return recordIdList
-  })(view)
+  // const RecordList = await view.getVisibleRecordIdList()
 
   // ## model2: 交互式选择记录 
-  // const RecordList = await bitable.ui.selectRecordIdList(tableId, viewId);
+  const RecordList = await bitable.ui.selectRecordIdList(tableId, viewId);
 
   // ## model3: 获取表格直接选中的记录
   // const RecordList = await table.getSelectedRecordIdList()
@@ -271,20 +265,11 @@ const writeData = async () => {
   }
 
   isWritingData.value = false
-  if (errorCount.value == 0) {
-    await bitable.ui.showToast({
-      toastType: 'success',
-      message: `${t('successFinishTip')}`
-    })
-    isShowReward.value = true
-  } else {
-    await bitable.ui.showToast({
-      toastType: 'error',
-      message: `${t('errorFinishTip')} ${errorCount.value}`
-    })
-  }
-
-  
+  isShowReward.value = true
+  await bitable.ui.showToast({
+    toastType: 'success',
+    message: `${t('finishTip')} ${errorCount.value}`
+  })
 
 
 
@@ -327,11 +312,14 @@ const getSelectedFieldsId = (fieldList, checkedFields) => {
 /* @param:path
 * get_xhs_detail_data-获取详细数据
 */
-const getXHSdatabylink = async (path, noteLink) => {
+const getXHSdatabylink = async (noteLink, baseId) => {
+  // 只使用详细数据接口
+  const path = 'get_xhs_detail_data';
   const url = `${baseUrl.value}/${path}`;
   const data = {
     url: noteLink,
-    cookie: cookie.value
+    cookie: cookie.value,
+    "base_id": baseId
   };
 
   try {
@@ -454,8 +442,8 @@ const getCellValueByRFIDS = async (recordId, field) => {
 }
 
 // --005== 依据 checkedFiledsToMap 做不同的请求处理
-const getDataByCheckedFields = async (noteLink) => {
-  let basicInfo = await getXHSdatabylink('get_xhs_detail_data', noteLink)
+const getDataByCheckedFields = async (noteLink, baseId) => {
+  let basicInfo = await getXHSdatabylink(noteLink, baseId)
   return { basicInfo }
 }
 
@@ -469,7 +457,7 @@ const completeMappedFieldIdsValue = async () => {
 
   // 匹配已有的字段
   const mainMappedFields = getSelectedFieldsId(mainFieldListSeView.value, checkedFieldsToMap.value)
-  // 历史记录表的 “视频链接” 字段
+  // 历史记录表的 "视频链接" 字段
   let historyCheckedFields = JSON.parse(JSON.stringify(checkedFieldsToMap.value))
   historyCheckedFields.push('link')
   let result = historyCheckedFields.filter(item => item != 'errorTip')
@@ -513,7 +501,10 @@ const handleErrorTip = async (errorMsg, recordId) => {
  */
 const handleError = async (recordId) => {
   // 错误处理，链接字段格式错误，应为文本类型
+  const selection = await bitable.base.getSelection();
+  const baseId = selection.baseId
   const table = await bitable.base.getActiveTable();
+
 
   const linkFieldMeta = await table.getFieldMetaById(linkFieldId.value)
   const linkField = await table.getFieldById(linkFieldId.value)
@@ -543,7 +534,7 @@ const handleError = async (recordId) => {
   console.log("noteLink", noteLink)
 
 
-  let totalNoteInfo = await getDataByCheckedFields(noteLink)
+  let totalNoteInfo = await getDataByCheckedFields(noteLink, baseId)
 
   if (totalNoteInfo.basicInfo.status == -100) {
     await handleErrorTip(totalNoteInfo.basicInfo.result, recordId)
@@ -670,13 +661,13 @@ onMounted(async () => {
   historyFieldListSeView.value = await historyTable.getFieldMetaList()
 
 
-  // 初始化可参与计算 “总交互量” 的对象数组，以“Count”结尾的
+  // 初始化可参与计算 "总交互量" 的对象数组，以"Count"结尾的
   allToCalcInterCount.value = fieldsToMap.value
     .filter(item => item.label.endsWith('Count'));
 
   if (localStorage.getItem('isDetailMode') !== null) {  // string 类型
     isDetailMode.value = Boolean(localStorage.getItem('isDetailMode'))
-  }
+  }ox
   if (localStorage.getItem('cookie') !== null) {  // string 类型
     cookie.value = localStorage.getItem('cookie')
   }
@@ -711,5 +702,12 @@ onMounted(async () => {
   color: #a29d9d;
   line-height: 1.5;
   margin-bottom: 20px;
+}
+
+.disclaimer {
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: left;
+  color: #5f350e;
 }
 </style>
