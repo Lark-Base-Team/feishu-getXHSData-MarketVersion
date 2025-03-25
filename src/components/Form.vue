@@ -31,13 +31,7 @@
     <div class="config-card">
       <div class="card-header">
         <div class="card-title">配置参数</div>
-        <div class="helper-doc">
-          <a href="https://jfsq6znqku.feishu.cn/wiki/T4z9wWK88inr5zkQqhtcwUCSnSf?from=from_copylink"
-            target="_blank" class="doc-link">
-            <!-- <i class="el-icon-document"></i> -->
-            <span>说明文档</span>
-          </a>
-        </div>
+        
       </div>
 
       <el-form-item :label="$t('labels.link')" size="large" required>
@@ -98,15 +92,70 @@
     </div>
 
   </el-form>
+
+  <!-- 进度弹窗 -->
+  <el-dialog
+    title="处理进度"
+    v-model="showProgressDialog"
+    :show-close="false"
+    :close-on-click-modal="false"
+    :close-on-press-escape="false"
+    width="300px"
+    align-center
+    class="progress-dialog"
+  >
+    <div class="progress-container">
+      <div id="liquidFillChart" class="liquid-fill-chart"></div>
+      <div class="progress-text">
+        <span>正在处理数据</span>
+        <span>{{ progressText }}</span>
+      </div>
+    </div>
+  </el-dialog>
+
+  <!-- 悬浮辅助菜单 -->
+  <div class="floating-menu">
+    <div class="floating-menu-item highlight-item" @click="openDocumentation">
+      <i class="el-icon-document"></i>
+      <span>使用文档</span>
+      <span class="highlight-badge">推荐阅读</span>
+    </div>
+    <div class="floating-menu-item" @click="showQrDialog = true">
+      <i class="el-icon-service"></i>
+      <span>用户群</span>
+    </div>
+    <div class="floating-menu-item" @click="openFeedbackForm">
+      <i class="el-icon-edit-outline"></i>
+      <span>问题反馈</span>
+    </div>
+  </div>
+
+  <!-- 用户群二维码弹窗 -->
+  <el-dialog
+    title="加入用户群"
+    v-model="showQrDialog"
+    width="400px"
+    align-center
+    :show-close="true"
+    custom-class="qr-dialog"
+  >
+    <div class="qr-content">
+      <p class="qr-desc">扫描下方二维码加入用户群，获取更多支持</p>
+      <img :src="qrCode" alt="用户群二维码" class="qr-image" />
+      <p class="qr-tip">如果无法扫码，请联系开发者获取邀请链接</p>
+    </div>
+  </el-dialog>
 </template>
 
 <script setup>
 import { bitable, FieldType } from '@lark-base-open/js-sdk';
 import { useI18n } from 'vue-i18n';
-import { ref, onMounted, computed, isShallow, watch } from 'vue';
+import { ref, onMounted, computed, isShallow, watch, nextTick, onUnmounted } from 'vue';
 import axios from 'axios';
 import qs from 'qs';
 import Reward from '@/components/Reward.vue'; // 确保路径正确
+import * as echarts from 'echarts';
+import 'echarts-liquidfill';
 // -- 可更改区域
 // 后端服务基地址列表
 const baseUrls = [
@@ -127,8 +176,10 @@ const mainFieldListSeView = ref([])
 const historyFieldListSeView = ref([])
 const linkFieldId = ref('')  // 链接字段Id
 const isShowReward = ref(false)
+const showQrDialog = ref(false) // 控制二维码弹窗的显示
+const showProgressDialog = ref(false) // 控制进度弹窗的显示
 
-const qrCode = ref('./src/assets/qrCode.jpg'); // 你的二维码图片路径
+const qrCode = ref('./src/assets/qrCode.png'); // 你的二维码图片路径
 const isWritingData = ref(false)
 let historyTable
 const isDetailMode = ref(true)
@@ -224,16 +275,71 @@ watch(cookie, (newVal) => {
   }
 })
 
+// 进度相关变量
+const currentProgress = ref(0)
+const progressText = computed(() => `${Math.round(currentProgress.value * 100)}%`)
+let liquidFillChart = null
+
+// 初始化水波图
+const initLiquidFillChart = () => {
+  const chartDom = document.getElementById('liquidFillChart')
+  if (!chartDom) return
+  
+  liquidFillChart = echarts.init(chartDom)
+  const option = {
+    series: [{
+      type: 'liquidFill',
+      data: [currentProgress.value],
+      radius: '80%',
+      amplitude: '8%',
+      waveLength: '80%',
+      color: ['#3370ff'],
+      backgroundStyle: {
+        color: '#f7f8fa'
+      },
+      outline: {
+        borderDistance: 2,
+        itemStyle: {
+          borderColor: '#3370ff',
+          borderWidth: 2
+        }
+      },
+      label: {
+        show: false
+      }
+    }]
+  }
+  liquidFillChart?.setOption(option)
+}
+
+// 更新水波图进度
+const updateProgress = (progress) => {
+  currentProgress.value = progress
+  if (liquidFillChart) {
+    liquidFillChart.setOption({
+      series: [{
+        data: [progress]
+      }]
+    })
+  }
+}
+
 // -- 核心算法区域
 // --001== 写入数据
 const writeData = async () => {
-  errorMessages.value = [] // 清空之前的错误信息
+  errorMessages.value = []
   isShowReward.value = false
   errorCount.value = 0
   if (isWritingData.value) {
     isForcedEnd.value = true
   }
   isWritingData.value = true
+  currentProgress.value = 0
+  showProgressDialog.value = true // 显示进度弹窗
+  
+  // 初始化水波图
+  await nextTick()
+  initLiquidFillChart()
 
   // 验证必填字段
   if (!linkFieldId.value) {
@@ -319,60 +425,43 @@ const writeData = async () => {
   })
 
   let successCount = 0
+  const totalRecords = RecordList.length
 
   for (let recordId of RecordList) {
-    // TODO：在这里书写处理逻辑——数据请求、数据写入等
-    // 非空处理
-    // 强制退出动作
     if (isForcedEnd.value) {
+      showProgressDialog.value = false // 隐藏进度弹窗
       await bitable.ui.showToast({
         toastType: 'warning',
         message: t('processForcedEnd')
       })
       return
     }
-    console.log("writeData() >> recordId", recordId)
 
-
-    /** 错误处理函数 
-     * {param}: recordId
-     * {return} noteLink、totalNoteInfo
-    */
-    console.log(218)
     let handleErrorRes = await handleError(recordId)
-    console.log(handleErrorRes)
     if (handleErrorRes.isError)
       continue
     else if (handleErrorRes.isReturn)
       return
 
     const { noteLink, totalNoteInfo } = handleErrorRes
-    console.log(227, noteLink)
-
-
-    /** 
-     * 命令式，但不改变任何对象的状态
-     * @param {object} totalNoteInfo 
-     * @param {object} table 数据表
-     * @param {string} recordId 记录ID
-     * @param {object} mappedFieldIds 映射字段Ids 
-     */
 
     await getAndSetRecordValue(totalNoteInfo, table, recordId, mappedFieldIds.value.main)
     await getAndAddRecordValue(totalNoteInfo, historyTable, mappedFieldIds.value.history, noteLink)
     
     successCount++
+    // 更新进度
+    updateProgress(successCount / totalRecords)
   }
 
   isWritingData.value = false
   isShowReward.value = true
+  showProgressDialog.value = false // 隐藏进度弹窗
   
   // 最终的结果提示
   await bitable.ui.showToast({
     toastType: 'success',
     message: `${t('finishTip')} ${errorCount.value === 0 ? t('noErrors') : t('withErrors', {count: errorCount.value})}`
   })
-
 }
 
 
@@ -799,6 +888,23 @@ onMounted(async () => {
   }
 });
 
+// 悬浮菜单功能
+const openDocumentation = () => {
+  window.open('https://jfsq6znqku.feishu.cn/wiki/T4z9wWK88inr5zkQqhtcwUCSnSf?from=from_copylink', '_blank');
+}
+
+const openFeedbackForm = () => {
+  window.open('https://jfsq6znqku.feishu.cn/share/base/form/shrcnpUQeYcjCLK9IDPHX18seEf', '_blank');
+}
+
+// 在组件卸载时销毁图表
+onUnmounted(() => {
+  if (liquidFillChart) {
+    liquidFillChart.dispose()
+    liquidFillChart = null
+  }
+})
+
 </script>
 
 
@@ -983,5 +1089,152 @@ onMounted(async () => {
   text-decoration: underline;
   font-weight: 500;
   color: #333;
+}
+
+/* 悬浮菜单样式 */
+.floating-menu {
+  position: fixed;
+  right: 20px;
+  bottom: 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 1000;
+}
+
+.floating-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  background-color: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #333;
+  font-size: 15px;
+  min-width: 110px;
+  position: relative;
+}
+
+.highlight-item {
+  background-color: #ECF5FF;
+  border: 1px solid #3370ff;
+  box-shadow: 0 4px 20px rgba(51, 112, 255, 0.25);
+}
+
+.highlight-badge {
+  position: absolute;
+  top: -10px;
+  right: 10px;
+  background-color: #3370ff;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.floating-menu-item:hover {
+  background-color: #f0f7ff;
+  color: #3370ff;
+  transform: translateX(-8px);
+  box-shadow: 0 6px 20px rgba(51, 112, 255, 0.25);
+}
+
+.highlight-item:hover {
+  background-color: #3370ff;
+  color: white;
+  transform: translateX(-10px);
+  box-shadow: 0 6px 20px rgba(51, 112, 255, 0.4);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .floating-menu {
+    bottom: 30px;
+    right: 15px;
+  }
+  
+  .floating-menu-item {
+    padding: 8px 14px;
+    font-size: 14px;
+    min-width: 100px;
+  }
+}
+
+/* 二维码弹窗样式 */
+.qr-dialog {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.qr-content {
+  text-align: center;
+  padding: 20px;
+}
+
+.qr-desc {
+  margin-bottom: 20px;
+  color: #606266;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.qr-image {
+  width: 200px;
+  height: 200px;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  margin: 20px 0;
+}
+
+.qr-tip {
+  margin-top: 15px;
+  font-size: 12px;
+  color: #909399;
+}
+
+/* 进度弹窗样式 */
+.progress-dialog :deep(.el-dialog__header) {
+  padding-bottom: 0;
+  margin-right: 0;
+}
+
+.progress-dialog :deep(.el-dialog__body) {
+  padding-top: 10px;
+}
+
+.progress-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0;
+}
+
+.liquid-fill-chart {
+  width: 150px;
+  height: 150px;
+  margin-bottom: 15px;
+}
+
+.progress-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #606266;
+  font-size: 14px;
+}
+
+.progress-text span:first-child {
+  margin-bottom: 6px;
+  color: #606266;
+}
+
+.progress-text span:last-child {
+  font-size: 18px;
+  font-weight: 500;
+  color: #3370ff;
 }
 </style>

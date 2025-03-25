@@ -10,6 +10,8 @@
     "@kousum/semi-ui-vue": "^0.21.1",
     "@lark-base-open/js-sdk": "^0.3.8",
     "axios": "^1.6.3",
+    "echarts": "^5.6.0",
+    "echarts-liquidfill": "^3.1.0",
     "element-plus": "^2.3.6",
     "qs": "^6.11.2",
     "reset-css": "^5.0.1",

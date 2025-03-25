@@ -3,7 +3,7 @@
   "selectGroup": {
     "selectAll": "Select All",
     "videoInfo": {
-      "link": "Link",
+      "link": "Note Link",
       "title": "Title",
       "uploader": "Blogger",
       "content": "Content",
@@ -27,7 +27,7 @@
     "selectGroupFieldTip": "The plugin can automatically create selected fields. If mapping is needed, please ensure the field names in the multidimensional table are consistent with the option names. It is recommended that the 'Blogger' field type be text, 'xx Count' field types be numbers, and 'xx Time' fields be dates. 'Total Interaction Count' field can perform calculations across multiple fields"
   },
   "labels": {
-    "link": "Link",
+    "link": "Note Link",
     "cookie": "Cookie",
     "xSCommon": "X-S-Common"
   },
