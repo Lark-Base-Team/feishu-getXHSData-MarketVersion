@@ -38,7 +38,7 @@
     "attachment": "类型校验失败：类型不是附件"
   },
   "placeholder": {
-    "link": "请选择视频链接对应的字段列",
+    "link": "请选择笔记链接对应的字段列",
     "interCount": "请选择所有需要计算的字段列",
     "cookie": "请参照说明文档输入 cookie",
     "xSCommon": "请参照说明文档输入 X-S-Common"
@@ -50,7 +50,10 @@
     "emptyNoteLink": "文章链接地址错误",
     "errorLink": "链接格式错误，请查看说明文档",
     "errorLinkType": "字段类型错误，请设置为文本类型或链接类型",
-    "errorRequest": "Cookie 错误或请求超时"
+    "errorRequest": "Cookie 错误或请求超时",
+    "noRecordsSelected": "请选择要获取数据的记录",
+    "noLinkField": "请选择笔记链接对应的字段列",
+    "noCookie": "请输入 Cookie"
   },
   "finishTip": "数据获取完成, 请求失败数："
 

@@ -38,7 +38,7 @@
     "attachment": "Type verification failed: Type is not an attachment"
   },
   "placeholder": {
-    "link": "Please select the field column corresponding to the video link",
+    "link": "Please select the field column corresponding to the note link",
     "interCount": "Please select all the fields that need to be calculated",
     "cookie": "Please enter the cookie as described in the documentation",
     "xSCommon": "Please enter the X-S-Common as described in the documentation"
@@ -50,7 +50,10 @@
     "emptyNoteLink": "Article link address error",
     "errorLink": "Link format error, please refer to the documentation",
     "errorLinkType": "Field type error, please set to text type or link type",
-    "errorRequest": "Cookie error or request timeout"
+    "errorRequest": "Cookie error or request timeout",
+    "noRecordsSelected": "Please select the record to retrieve data",
+    "noLinkField": "Please select the field column corresponding to the note link",
+    "noCookie": "Please enter the cookie"
   },
   "finishTip": "Data retrieval complete, number of failed requests:"
 }

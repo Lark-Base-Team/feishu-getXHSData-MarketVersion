@@ -1,91 +1,124 @@
 <template>
   <el-form ref="form" class="form" label-position="top">
+    <!-- 头部标题区域 -->
+    <div class="header-title">
+      <div class="title-icon"></div>
+      <div class="title-text">小红书助手</div>
+    </div>
+    
+    <!-- 简介说明区域 -->
+    <div class="description-box">
+      <p>依据<span class="underline">小红书笔记链接</span>，获取笔记相关数据。</p>
+      <div class="feature-tags">
+        <span class="feature-tag"><i class="el-icon-data-analysis"></i> 数据获取</span>
+        <!-- <span class="feature-tag"><i class="el-icon-document"></i> 内容保存</span> -->
+        <!-- <span class="feature-tag"><i class="el-icon-refresh"></i> 定期更新</span> -->
+      </div>
+    </div>
+
     <!-- 免责声明区域 -->
     <el-alert
       type="warning"
       :closable="false"
-      style="margin-bottom: 20px; border-radius: 4px;"
+      style="border-radius: 8px; margin-bottom: 20px;"
     >
       <div class="disclaimer">
         <strong>免责声明：</strong>本工具仅供学习交流使用，不得用于任何商业目的。使用本工具获取的数据，用户应当遵守相关法律法规，不得用于侵犯他人合法权益。开发者对使用本工具产生的任何后果不承担责任。
       </div>
     </el-alert>
     
-    <div style="width: 100%;padding-left: 10px;border-left: 5px solid #2598f8;margin-bottom: 20px;padding-top: 5px;">{{
-      $t('title') }}</div>
-    <el-alert style="margin: 20px 0;color: #606266;" :title="$t('alerts.selectNumberField')" type="info" />
-    <div class="helper-doc">
-      <span>{{ $t('helpTip') }}</span>
-      <span style="height: 16px;width: 16px;margin-left: 12px;">
-        <a href="https://jfsq6znqku.feishu.cn/wiki/T4z9wWK88inr5zkQqhtcwUCSnSf?from=from_copylink"
-          target="_blank"><span>说明文档</span></a>
-      </span>
+    <!-- 主配置区域 - 使用卡片样式 -->
+    <div class="config-card">
+      <div class="card-header">
+        <div class="card-title">配置参数</div>
+        <div class="helper-doc">
+          <a href="https://jfsq6znqku.feishu.cn/wiki/T4z9wWK88inr5zkQqhtcwUCSnSf?from=from_copylink"
+            target="_blank" class="doc-link">
+            <!-- <i class="el-icon-document"></i> -->
+            <span>说明文档</span>
+          </a>
+        </div>
+      </div>
 
-    </div>
+      <el-form-item :label="$t('labels.link')" size="large" required>
+        <el-select v-model="linkFieldId" :placeholder="$t('placeholder.link')" style="width: 100%">
+          <el-option v-for="meta in mainFieldListSeView" :key="meta.id" :label="meta.name" :value="meta.id" />
+        </el-select>
+      </el-form-item>
 
-
-    <el-form-item style="margin-top: 40px;" :label="$t('labels.link')" size="large" required>
-      <el-select v-model="linkFieldId" :placeholder="$t('placeholder.link')" style="width: 100%">
-        <el-option v-for="meta in mainFieldListSeView" :key="meta.id" :label="meta.name" :value="meta.id" />
-      </el-select>
-    </el-form-item>
-
-    <!-- 多选框 -->
-    <div class="map-fields-checklist">
-      <el-checkbox v-model="checkAllToMap" :indeterminate="isIndeterminateToMap" @change="handlecheckAllToMapChange">{{
-        $t('selectGroup.selectAll') }}</el-checkbox>
-      <el-checkbox-group v-model="checkedFieldsToMap" @change="handleCheckedFieldsToMapChange">
-        <el-checkbox v-for="fieldToMap in fieldsToMap" :key="fieldToMap.label" :label="fieldToMap.label">
-          {{ $t(`selectGroup.videoInfo.${fieldToMap.label}`) }}
+      <!-- 多选框 -->
+      <div class="section-title">选择需要获取的数据字段</div>
+      <div class="map-fields-checklist">
+        <el-checkbox v-model="checkAllToMap" :indeterminate="isIndeterminateToMap" @change="handlecheckAllToMapChange">
+          {{ $t('selectGroup.selectAll') }}
         </el-checkbox>
-      </el-checkbox-group>
+        <el-checkbox-group v-model="checkedFieldsToMap" @change="handleCheckedFieldsToMapChange">
+          <el-checkbox v-for="fieldToMap in fieldsToMap" :key="fieldToMap.label" :label="fieldToMap.label" 
+            :disabled="fieldToMap.label === 'errorTip'" class="field-checkbox">
+            {{ $t(`selectGroup.videoInfo.${fieldToMap.label}`) }}
+          </el-checkbox>
+        </el-checkbox-group>
+      </div>
+
+      <div v-if="checkedFieldsToMap.includes('totalInterCount')" class="interaction-fields">
+        <div class="section-title">交互量计算字段</div>
+        <el-select v-model="toCalcInterCount" multiple :placeholder="$t('placeholder.interCount')" style="width: 100%;">
+          <el-option v-for="item in allToCalcInterCount" :key="item.label"
+            :label="$t(`selectGroup.videoInfo.${item.label}`)" :value="item.label" />
+        </el-select>
+      </div>
+
+      <el-form-item v-if="isDetailMode" :label="$t('labels.cookie')" size="large" required>
+        <div class="cookie-tip">Cookie 为必填项，没有有效的 Cookie 将无法获取数据。请参考说明文档获取并填写 Cookie 以获取数据。</div>
+        <el-input v-model="cookie" type="text" :placeholder="$t('placeholder.cookie')"></el-input>
+      </el-form-item>
     </div>
-    <div style="margin-top: 20px;" v-if="checkedFieldsToMap.includes('totalInterCount')">
-      <el-select v-model="toCalcInterCount" multiple :placeholder="$t('placeholder.interCount')" style="width: 100%;"
-        size="large">
-        <el-option v-for="item in allToCalcInterCount" :key="item.label"
-          :label="$t(`selectGroup.videoInfo.${item.label}`)" :value="item.label" />
-      </el-select>
-    </div>
-    <el-alert style="display: flex;align-items: flex-start;margin: 20px 0;background-color: #e1eaff;color: #606266;"
-      :title="$t('alerts.selectGroupFieldTip')" type="info" show-icon />
-
-
-    <el-form-item v-if="isDetailMode" style="margin-top: 20px;" :label="$t('labels.cookie')" size="large" required>
-      <div class="cookie-tip">Cookie 为必填项，没有有效的 Cookie 将无法获取数据。请参考说明文档获取并填写 Cookie 以获取数据。</div>
-      <el-input v-model="cookie" type="text" :placeholder="$t('placeholder.cookie')"></el-input>
-
-    </el-form-item>
-
-    <!--2024-07-24 版本已经不需要填写 x-s-common -->
-    <!-- <el-form-item v-if="isDetailMode" style="margin-top: 20px;" :label="$t('labels.xSCommon')" size="large" required>
-      <el-input v-model="xSCommon" type="text" :placeholder="$t('placeholder.xSCommon')"></el-input>
-      
-    </el-form-item> -->
-
-    <!-- 选择对应的字段映射 -->
-
 
     <!-- 提交按钮 -->
-    <el-button v-loading="isWritingData" @click="writeData" :disabled="!issubmitAbled" color="#3370ff" type="primary"
-      plain size="large">{{ $t('submit') }}</el-button>
-
-    <div v-show="isShowReward" style="padding-bottom: 50px;">
-      <reward author="无意" :qrCode="qrCode" />
+    <div class="action-area">
+      <el-button v-loading="isWritingData" @click="writeData" type="primary" size="large" class="submit-button">
+        <i class="el-icon-download"></i> {{ $t('submit') }}
+      </el-button>
     </div>
+
+    <!-- 错误信息显示区域 -->
+    <div v-if="errorMessages.length > 0" class="error-messages">
+      <div class="error-header">
+        <i class="el-icon-warning-outline"></i> 错误信息
+      </div>
+      <el-alert
+        v-for="(message, index) in errorMessages"
+        :key="index"
+        type="error"
+        :title="message"
+        show-icon
+        style="margin-bottom: 10px;"
+      />
+    </div>
+
   </el-form>
 </template>
 
 <script setup>
 import { bitable, FieldType } from '@lark-base-open/js-sdk';
 import { useI18n } from 'vue-i18n';
-import { ref, onMounted, computed, isShallow } from 'vue';
+import { ref, onMounted, computed, isShallow, watch } from 'vue';
 import axios from 'axios';
 import qs from 'qs';
 import Reward from '@/components/Reward.vue'; // 确保路径正确
 // -- 可更改区域
-// TODO: 可替换为相应的后端服务基地址，注意末尾没有斜杠
-const baseUrl = ref('https://a-free-xhs-data-yngsgiwyot.cn-hongkong.fcapp.run')
+// 后端服务基地址列表
+const baseUrls = [
+  'https://nmblaicdcfba.sealosbja.site',
+  'https://rvrctaumolkd.sealosbja.site',
+  'https://evuypgxakdox.sealosbja.site'
+]
+
+// 随机获取一个基地址
+const getRandomBaseUrl = () => {
+  const randomIndex = Math.floor(Math.random() * baseUrls.length)
+  return baseUrls[randomIndex]
+}
 
 // -- 数据区域
 const { t } = useI18n();
@@ -166,23 +199,34 @@ const cookie = ref('')
 const xSCommon = ref('')
 const isForcedEnd = ref(false)
 const errorCount = ref(0)
+const errorMessages = ref([]) // 新增错误信息数组
 
 const issubmitAbled = computed(() => {
-  if (!isDetailMode.value)
-    return linkFieldId.value && checkedFieldsToMap.value.length
-  else
-    return linkFieldId.value && checkedFieldsToMap.value.length && cookie.value
-
-})  // 是否允许提交，及必选字段是否都填写
+  return true // 按钮始终可点击
+})
 
 const mappedFieldIds = ref({
   "main": {},  // 主表
   "history": {}  // 历史记录 表
 })
 
+// 添加监听器
+watch(linkFieldId, (newVal) => {
+  if (newVal) {
+    localStorage.setItem('linkFieldId', newVal)
+  }
+})
+
+watch(cookie, (newVal) => {
+  if (newVal) {
+    localStorage.setItem('cookie', newVal)
+  }
+})
+
 // -- 核心算法区域
 // --001== 写入数据
 const writeData = async () => {
+  errorMessages.value = [] // 清空之前的错误信息
   isShowReward.value = false
   errorCount.value = 0
   if (isWritingData.value) {
@@ -190,6 +234,36 @@ const writeData = async () => {
   }
   isWritingData.value = true
 
+  // 验证必填字段
+  if (!linkFieldId.value) {
+    errorMessages.value.push(t('errorTip.noLinkField'))
+    isWritingData.value = false
+    await bitable.ui.showToast({
+      toastType: 'warning',
+      message: t('errorTip.noLinkField')
+    })
+    return
+  }
+
+  if (isDetailMode.value && !cookie.value) {
+    errorMessages.value.push(t('errorTip.noCookie'))
+    isWritingData.value = false
+    await bitable.ui.showToast({
+      toastType: 'warning',
+      message: t('errorTip.noCookie')
+    })
+    return
+  }
+
+  if (checkedFieldsToMap.value.length === 0) {
+    errorMessages.value.push(t('errorTip.noFieldsSelected'))
+    isWritingData.value = false
+    await bitable.ui.showToast({
+      toastType: 'warning',
+      message: t('errorTip.noFieldsSelected')
+    })
+    return
+  }
 
   // 加载bitable实例
   const { tableId, viewId } = await bitable.base.getSelection();
@@ -198,37 +272,62 @@ const writeData = async () => {
 
   // 错误判断：应当在主表中进行
   if (table.id == historyTable.id) {
-    bitable.ui.showToast({
+    errorMessages.value.push(t('notAllowedInHistoryTable'))
+    isWritingData.value = false
+    await bitable.ui.showToast({
       toastType: 'warning',
       message: t('notAllowedInHistoryTable')
     })
-    isWritingData.value = false
     return
   }
 
   // 获取字段数据Ids object类型，匹配已有的字段，创建缺少的字段
   // @status {mappedFieldIds, isWritingData}  表示是命令性质的方法，改变mappedFieldIds对象的状态
-  await completeMappedFieldIdsValue()
-
-  // ## mode1: 全部记录
-  // const RecordList = await view.getVisibleRecordIdList()
+  const fieldsMappingResult = await completeMappedFieldIdsValue()
+  if (!fieldsMappingResult) {
+    await bitable.ui.showToast({
+      toastType: 'warning',
+      message: t('errorTip.mappingFailed')
+    })
+    return
+  }
 
   // ## model2: 交互式选择记录 
   const RecordList = await bitable.ui.selectRecordIdList(tableId, viewId);
 
-  // ## model3: 获取表格直接选中的记录
-  // const RecordList = await table.getSelectedRecordIdList()
   console.log("RecordList", RecordList)
+  
+  // 检查是否选择了记录
+  if (!RecordList || RecordList.length === 0) {
+    errorMessages.value.push(t('errorTip.noRecordsSelected'))
+    isWritingData.value = false
+    await bitable.ui.showToast({
+      toastType: 'warning',
+      message: t('errorTip.noRecordsSelected')
+    })
+    return
+  }
 
-  localStorage.setItem('cookie', cookie.value)   // string 类型
-  localStorage.setItem('xSCommon', xSCommon.value)   // string 类型
-  localStorage.setItem('isDetailMode', isDetailMode.value)   // string 类型
+  // 更新本地存储
+  localStorage.setItem('isDetailMode', isDetailMode.value.toString())
+
+  // 显示开始处理的Toast
+  await bitable.ui.showToast({
+    toastType: 'info',
+    message: `${t('processingStart')} ${RecordList.length} ${t('records')}`
+  })
+
+  let successCount = 0
 
   for (let recordId of RecordList) {
     // TODO：在这里书写处理逻辑——数据请求、数据写入等
     // 非空处理
     // 强制退出动作
     if (isForcedEnd.value) {
+      await bitable.ui.showToast({
+        toastType: 'warning',
+        message: t('processForcedEnd')
+      })
       return
     }
     console.log("writeData() >> recordId", recordId)
@@ -260,19 +359,18 @@ const writeData = async () => {
 
     await getAndSetRecordValue(totalNoteInfo, table, recordId, mappedFieldIds.value.main)
     await getAndAddRecordValue(totalNoteInfo, historyTable, mappedFieldIds.value.history, noteLink)
-
-
+    
+    successCount++
   }
 
   isWritingData.value = false
   isShowReward.value = true
+  
+  // 最终的结果提示
   await bitable.ui.showToast({
     toastType: 'success',
-    message: `${t('finishTip')} ${errorCount.value}`
+    message: `${t('finishTip')} ${errorCount.value === 0 ? t('noErrors') : t('withErrors', {count: errorCount.value})}`
   })
-
-
-
 
 }
 
@@ -313,9 +411,9 @@ const getSelectedFieldsId = (fieldList, checkedFields) => {
 * get_xhs_detail_data-获取详细数据
 */
 const getXHSdatabylink = async (noteLink, baseId) => {
-  // 只使用详细数据接口
   const path = 'get_xhs_detail_data';
-  const url = `${baseUrl.value}/${path}`;
+  const baseUrl = getRandomBaseUrl();
+  const url = `${baseUrl}/${path}`;
   const data = {
     url: noteLink,
     cookie: cookie.value,
@@ -466,12 +564,10 @@ const completeMappedFieldIdsValue = async () => {
 
 
   if (typeof mainMappedFields == 'string' || typeof historyMappedFields == 'string') {// 错误处理，提示格式错误 
-    await bitable.ui.showToast({
-      toastType: 'warning',
-      message: mappedFields
-    })
+    // 使用错误信息区域显示而不是toast
+    errorMessages.value.push(typeof mainMappedFields === 'string' ? mainMappedFields : historyMappedFields)
     isWritingData.value = false
-    return
+    return false
   }
 
   // 创建缺少的字段
@@ -479,6 +575,7 @@ const completeMappedFieldIdsValue = async () => {
   mappedFieldIds.value.history = historyMappedFields
   await createFields(mappedFieldIds.value.main, table)
   await createFields(mappedFieldIds.value.history, historyTable)
+  return true
 }
 
 /** --007== 错误处理 
@@ -488,9 +585,8 @@ const completeMappedFieldIdsValue = async () => {
 */
 const handleErrorTip = async (errorMsg, recordId) => {
   const table = await bitable.base.getActiveTable();
-
-
   errorCount.value++
+  errorMessages.value.push(errorMsg) // 添加错误信息到显示区域
   await table.setCellValue(mappedFieldIds.value.main['errorTip'], recordId, [{ type: 'text', text: errorMsg }])
 }
 
@@ -618,15 +714,18 @@ const handlecheckAllToMapChange = (val) => {
     checkedFieldsToMap.value = []
     for (const item of data)
       checkedFieldsToMap.value.push(item.label);
-
-
   } else {
-    checkedFieldsToMap.value = []
+    checkedFieldsToMap.value = ['errorTip'] // 即使取消全选，也保留 errorTip
   }
   isIndeterminateToMap.value = false
 }
 // Map==字段选择事件
 const handleCheckedFieldsToMapChange = (value) => {
+  // 确保 errorTip 始终被选中
+  if (!value.includes('errorTip')) {
+    value.push('errorTip')
+  }
+  
   const checkedCount = value.length
   checkAllToMap.value = checkedCount === fieldsToMap.value.length
   isIndeterminateToMap.value = checkedCount > 0 && checkedCount < fieldsToMap.value.length
@@ -665,17 +764,38 @@ onMounted(async () => {
   allToCalcInterCount.value = fieldsToMap.value
     .filter(item => item.label.endsWith('Count'));
 
-  if (localStorage.getItem('isDetailMode') !== null) {  // string 类型
-    isDetailMode.value = Boolean(localStorage.getItem('isDetailMode'))
-  }ox
-  if (localStorage.getItem('cookie') !== null) {  // string 类型
-    cookie.value = localStorage.getItem('cookie')
+  // 读取缓存内容
+  if (localStorage.getItem('isDetailMode') !== null) {
+    isDetailMode.value = localStorage.getItem('isDetailMode') === 'true'
   }
-  if (localStorage.getItem('xSCommon') !== null) {  // string 类型
+  
+  // 从缓存中读取链接字段ID
+  const cachedLinkFieldId = localStorage.getItem('linkFieldId')
+  if (cachedLinkFieldId) {
+    // 验证缓存的字段ID是否在当前表格中存在
+    const fieldExists = mainFieldListSeView.value.some(field => field.id === cachedLinkFieldId)
+    if (fieldExists) {
+      linkFieldId.value = cachedLinkFieldId
+    } else {
+      // 如果字段不存在，清除缓存
+      localStorage.removeItem('linkFieldId')
+    }
+  }
+
+  // 从缓存中读取cookie
+  const cachedCookie = localStorage.getItem('cookie')
+  if (cachedCookie) {
+    cookie.value = cachedCookie
+  }
+  
+  if (localStorage.getItem('xSCommon') !== null) {
     xSCommon.value = localStorage.getItem('xSCommon')
   }
 
-
+  // 确保 errorTip 字段始终被选中
+  if (!checkedFieldsToMap.value.includes('errorTip')) {
+    checkedFieldsToMap.value.push('errorTip')
+  }
 });
 
 </script>
@@ -683,25 +803,138 @@ onMounted(async () => {
 
 
 <style scoped>
-.helper-doc {
-
-  margin-top: -10px;
-  font-size: 14px;
+.form {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
 }
 
-.helper-doc a {
+.header-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.title-icon {
+  font-size: 28px;
+  margin-right: 12px;
+}
+
+.title-text {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+}
+
+.description-box {
+  background-color: #f7f8fa;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.description-box p {
+  margin: 0 0 12px 0;
+  color: #606266;
+  line-height: 1.5;
+}
+
+.feature-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.feature-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background-color: #e6f1fc;
   color: #409eff;
+  border-radius: 4px;
+  font-size: 12px;
 }
 
-.helper-doc a:hover {
-  color: #7abcff;
+.feature-tag i {
+  margin-right: 4px;
+}
+
+.config-card {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
+.section-title {
+  margin: 16px 0 8px 0;
+  font-weight: 500;
+  color: #606266;
+}
+
+.helper-doc {
+  font-size: 15px;
+}
+
+.helper-doc a.doc-link {
+  color: #3370ff;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  border: 1px solid #3370ff;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  background-color: rgba(51, 112, 255, 0.08);
+  font-weight: 500;
+}
+
+.helper-doc a.doc-link:hover {
+  background-color: #3370ff;
+  color: white;
+  box-shadow: 0 2px 8px rgba(51, 112, 255, 0.3);
+}
+
+.helper-doc a.doc-link i {
+  margin-right: 6px;
+  font-size: 16px;
+}
+
+.map-fields-checklist {
+  margin-bottom: 16px;
+}
+
+.field-checkbox {
+  margin-right: 16px;
+  margin-bottom: 8px;
+}
+
+.interaction-fields {
+  background-color: #f5f7fa;
+  padding: 16px;
+  border-radius: 6px;
+  margin-bottom: 16px;
 }
 
 .cookie-tip {
   font-size: 14px;
-  color: #a29d9d;
+  color: #909399;
   line-height: 1.5;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .disclaimer {
@@ -709,5 +942,45 @@ onMounted(async () => {
   line-height: 1.5;
   text-align: left;
   color: #5f350e;
+}
+
+.action-area {
+  display: flex;
+  justify-content: center;
+  margin: 30px 0;
+}
+
+.submit-button {
+  width: 180px;
+  height: 50px;
+  font-size: 16px;
+  box-shadow: 0 4px 12px rgba(51, 112, 255, 0.2);
+}
+
+.error-messages {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 8px;
+  background-color: #fff2f0;
+  border: 1px solid #fde2e2;
+}
+
+.error-header {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 500;
+  color: #f56c6c;
+  margin-bottom: 12px;
+}
+
+.error-header i {
+  margin-right: 8px;
+}
+
+.underline {
+  text-decoration: underline;
+  font-weight: 500;
+  color: #333;
 }
 </style>
