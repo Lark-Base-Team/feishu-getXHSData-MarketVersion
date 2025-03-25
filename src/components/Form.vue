@@ -46,6 +46,7 @@
         </el-select>
       </el-form-item>
 
+      
       <!-- 多选框 -->
       <div class="section-title">选择需要获取的数据字段</div>
       <div class="map-fields-checklist">
