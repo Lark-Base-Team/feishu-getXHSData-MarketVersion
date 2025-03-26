@@ -179,7 +179,7 @@ const isShowReward = ref(false)
 const showQrDialog = ref(false) // 控制二维码弹窗的显示
 const showProgressDialog = ref(false) // 控制进度弹窗的显示
 
-const qrCode = ref('./src/assets/qrCode.png'); // 你的二维码图片路径
+const qrCode = ref('https://figs-bed-1307577475.cos.ap-nanjing.myqcloud.com/imgs-bed/qrCode.png'); // 线上二维码图片地址
 const isWritingData = ref(false)
 let historyTable
 const isDetailMode = ref(true)
@@ -335,11 +335,6 @@ const writeData = async () => {
   }
   isWritingData.value = true
   currentProgress.value = 0
-  showProgressDialog.value = true // 显示进度弹窗
-  
-  // 初始化水波图
-  await nextTick()
-  initLiquidFillChart()
 
   // 验证必填字段
   if (!linkFieldId.value) {
@@ -408,13 +403,17 @@ const writeData = async () => {
   if (!RecordList || RecordList.length === 0) {
     errorMessages.value.push(t('errorTip.noRecordsSelected'))
     isWritingData.value = false
-    showProgressDialog.value = false // 关闭进度弹窗
     await bitable.ui.showToast({
       toastType: 'warning',
       message: t('errorTip.noRecordsSelected')
     })
     return
   }
+
+  // 所有必要信息验证通过后，显示进度条
+  showProgressDialog.value = true
+  await nextTick()
+  initLiquidFillChart()
 
   // 更新本地存储
   localStorage.setItem('isDetailMode', isDetailMode.value.toString())
@@ -513,6 +512,11 @@ const getXHSdatabylink = async (noteLink, baseId) => {
 
   try {
     const response = await axios.post(url, qs.stringify(data));
+
+    // 检查响应是否包含错误信息
+    if (response.data && response.data[0] && response.data[0].status === 501) {
+      return { status: "-100", result: response.data[0].error };
+    }
 
     const noteInfo = response.data.info;
     const res = {
