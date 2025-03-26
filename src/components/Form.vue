@@ -828,9 +828,6 @@ const handleCheckedFieldsToMapChange = (value) => {
 
 
 onMounted(async () => {
-  // 初始化勾选字段
-  // const language = await bitable.bridge.getLanguage();
-
   // 获取字段列表 -- start
   const selection = await bitable.base.getSelection()
   const table = await bitable.base.getTableById(selection.tableId)
@@ -838,32 +835,6 @@ onMounted(async () => {
   mainFieldListSeView.value = await view.getFieldMetaList()
   // 获取字段列表 -- end
 
-
-  // 历史记录表
-  try {
-    historyTable = await bitable.base.getTableByName(t('history.tableName'));
-
-  } catch (error) {
-    const { tableId, index } = await bitable.base.addTable({
-      name: t('history.tableName')
-    })
-
-    historyTable = await bitable.base.getTableById(tableId)
-
-  }
-
-  historyFieldListSeView.value = await historyTable.getFieldMetaList()
-
-
-  // 初始化可参与计算 "总交互量" 的对象数组，以"Count"结尾的
-  allToCalcInterCount.value = fieldsToMap.value
-    .filter(item => item.label.endsWith('Count'));
-
-  // 读取缓存内容
-  if (localStorage.getItem('isDetailMode') !== null) {
-    isDetailMode.value = localStorage.getItem('isDetailMode') === 'true'
-  }
-  
   // 从缓存中读取链接字段ID
   const cachedLinkFieldId = localStorage.getItem('linkFieldId')
   if (cachedLinkFieldId) {
@@ -875,6 +846,27 @@ onMounted(async () => {
       // 如果字段不存在，清除缓存
       localStorage.removeItem('linkFieldId')
     }
+  }
+
+  // 历史记录表
+  try {
+    historyTable = await bitable.base.getTableByName(t('history.tableName'));
+  } catch (error) {
+    const { tableId, index } = await bitable.base.addTable({
+      name: t('history.tableName')
+    })
+    historyTable = await bitable.base.getTableById(tableId)
+  }
+
+  historyFieldListSeView.value = await historyTable.getFieldMetaList()
+
+  // 初始化可参与计算 "总交互量" 的对象数组，以"Count"结尾的
+  allToCalcInterCount.value = fieldsToMap.value
+    .filter(item => item.label.endsWith('Count'));
+
+  // 读取缓存内容
+  if (localStorage.getItem('isDetailMode') !== null) {
+    isDetailMode.value = localStorage.getItem('isDetailMode') === 'true'
   }
 
   // 从缓存中读取cookie
