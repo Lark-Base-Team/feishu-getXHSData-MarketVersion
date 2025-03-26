@@ -408,6 +408,7 @@ const writeData = async () => {
   if (!RecordList || RecordList.length === 0) {
     errorMessages.value.push(t('errorTip.noRecordsSelected'))
     isWritingData.value = false
+    showProgressDialog.value = false // 关闭进度弹窗
     await bitable.ui.showToast({
       toastType: 'warning',
       message: t('errorTip.noRecordsSelected')
