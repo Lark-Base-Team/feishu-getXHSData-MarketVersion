@@ -159,9 +159,10 @@ import 'echarts-liquidfill';
 // -- 可更改区域
 // 后端服务基地址列表
 const baseUrls = [
-  'https://nmblaicdcfba.sealosbja.site',
-  'https://rvrctaumolkd.sealosbja.site',
-  'https://evuypgxakdox.sealosbja.site'
+  'https://feishu-xhs-assistant-directrequest-wuyi.replit.app',
+  // 'https://nmblaicdcfba.sealosbja.site',
+  // 'https://rvrctaumolkd.sealosbja.site',
+  // 'https://evuypgxakdox.sealosbja.site'
 ]
 
 // 随机获取一个基地址
