@@ -81,14 +81,25 @@
       <div class="error-header">
         <i class="el-icon-warning-outline"></i> 错误信息
       </div>
-      <el-alert
-        v-for="(message, index) in errorMessages"
-        :key="index"
-        type="error"
-        :title="message"
-        show-icon
-        style="margin-bottom: 10px;"
-      />
+        <el-alert
+    v-for="(message, index) in errorMessages"
+    :key="index"
+    type="error"
+    show-icon
+    style="margin-bottom: 10px;"
+  >
+    <template #title>
+      {{ message }}
+      <a 
+        v-if="message.includes('当日多维表格用量已达上限')" 
+        href="https://jfsq6znqku.feishu.cn/docx/EE1Sdit4VoBMVXxmL4TcZAEDn2P" 
+        target="_blank" 
+        class="premium-link"
+      >
+        查看增值版本
+      </a>
+    </template>
+  </el-alert>
     </div>
 
   </el-form>
@@ -159,7 +170,7 @@ import 'echarts-liquidfill';
 // -- 可更改区域
 // 后端服务基地址列表
 const baseUrls = [
-  'https://feishu-xhs-assistant-directrequest-wuyi.replit.app',
+  'https://xhs-getend-free-tjuitluncr.cn-beijing.fcapp.run',
   // 'https://nmblaicdcfba.sealosbja.site',
   // 'https://rvrctaumolkd.sealosbja.site',
   // 'https://evuypgxakdox.sealosbja.site'
@@ -1192,6 +1203,25 @@ onUnmounted(() => {
   margin-top: 15px;
   font-size: 12px;
   color: #909399;
+}
+
+/* 增值版本链接样式 */
+.premium-link {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 8px;
+  background-color: #3370ff;
+  color: white;
+  border-radius: 4px;
+  font-size: 12px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.premium-link:hover {
+  background-color: #2855c7;
+  transform: scale(1.05);
 }
 
 /* 进度弹窗样式 */
